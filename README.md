@@ -36,6 +36,7 @@ graph TD;
     ```command
     make converge
     ```
+1. Follow [instructions to provision Calico and Istio](https://gist.github.com/lukassup/82cccb83a18b3510b925b6c771065efa)
 1. Use `make` to destroy virtual machines
     ```command
     make destroy
