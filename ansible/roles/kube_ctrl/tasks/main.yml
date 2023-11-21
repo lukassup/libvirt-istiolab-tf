@@ -1,0 +1,165 @@
+---
+- name: Copy kubeadm-init config
+  become: true
+  ansible.builtin.template:
+    dest: /root/kubeadm-init.yml
+    src: kubeadm-init.yml.j2
+    mode: "0644"
+    owner: root
+    group: root
+    validate: kubeadm config validate --config %s
+  vars:
+    cert_sans: '{{ groups["kube_ctrl"] + groups["kube_ctrl"] | map("extract", hostvars, "kube_common_kubelet_address") + ["localhost", "127.0.0.1", "::1"] }}'
+  tags: [kubeadm]
+
+- name: Copy kubeadm-join config
+  become: true
+  ansible.builtin.template:
+    dest: /root/kubeadm-join.yml
+    src: kubeadm-join-ctrl.yml.j2
+    mode: "0644"
+    owner: root
+    group: root
+    validate: kubeadm config validate --config %s
+  vars:
+    cert_sans: '{{ groups["kube_ctrl"] + groups["kube_ctrl"] | map("extract", hostvars, "kube_common_kubelet_address") + ["localhost", "127.0.0.1", "::1"] }}'
+  tags: [kubeadm]
+
+- name: List images
+  become: true
+  ansible.builtin.command:
+    cmd: crictl images -v
+  register: images
+  changed_when: false
+  tags: [kubeadm]
+
+- name: Kubeadm pull images
+  become: true
+  ansible.builtin.command:
+    cmd: kubeadm config images pull
+  register: kubeadm_pull
+  changed_when: kubeadm_pull.rc != 0
+  when:
+    - '"coredns/coredns" not in images.stdout'
+    - '"ectd" not in images.stdout'
+    - '"kube-apiserver" not in images.stdout'
+    - '"kube-controller-manager" not in images.stdout'
+    - '"kube-scheduler" not in images.stdout'
+    - '"pause" not in images.stdout'
+  tags: [kubeadm]
+
+- name: Kubeadm initialize first control plane node
+  become: true
+  ansible.builtin.command:
+    cmd: kubeadm init --upload-certs --config /root/kubeadm-init.yml
+    creates: /etc/kubernetes/pki/ca.key
+  when:
+    - kube_common_master == inventory_hostname
+  tags: [kubeadm]
+
+- name: Kubeadm join other control plane nodes
+  become: true
+  ansible.builtin.command:
+    cmd: kubeadm join --config /root/kubeadm-join.yml
+    creates: /etc/kubernetes/pki/ca.key
+  when:
+    - kube_common_master != inventory_hostname
+  tags: [kubeadm]
+
+- name: Create kubeconfig dir for root
+  become: true
+  ansible.builtin.file:
+    dest: /root/.kube
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+  tags: [kubeadm]
+
+- name: Copy admin kubeconfig to root home
+  become: true
+  ansible.builtin.copy:
+    remote_src: true
+    dest: /root/.kube/config
+    src: /etc/kubernetes/admin.conf
+    mode: '0600'
+    owner: root
+    group: root
+  tags: [kubeadm]
+
+- name: Fetch Calico manifest
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ kube_ctrl_calico_manifest_url }}"
+    dest: "/root/calico.yaml"
+    checksum: "{{ kube_ctrl_calico_manifest_checksum }}"
+    mode: "0644"
+    owner: root
+    group: root
+  tags: [calico]
+
+- name: Install calico bgppeer mainfest
+  become: true
+  ansible.builtin.template:
+    dest: /root/calico-bgppeer.yml
+    src: calico-bgppeer.yml.j2
+    mode: "0644"
+    owner: root
+    group: root
+  #vars:
+  #  bgp_asn: '{{ hostvars[net_tor].net_frr_bgp_asn }}'
+  #  bgp_peer: '{{ kube_common_bgp_peer }}'
+  #  rack_id: 'rack-{{ kube_common_bgp_peer.split(".")[0:3] | join("-") }}'
+  tags: [calico]
+
+- name: Install calico bgpconfiguration mainfest
+  become: true
+  ansible.builtin.template:
+    dest: /root/calico-bgpconfiguration.yml
+    src: calico-bgpconfiguration.yml.j2
+    mode: "0644"
+    owner: root
+    group: root
+  tags: [calico]
+
+#- name: Install calico manifest
+#  become: true
+#  ansible.builtin.command:
+#    cmd: kubectl apply -f /root/calico.yaml
+#  when:
+#    - kube_common_master == inventory_hostname
+#  tags: [kubeadm]
+
+# - name: Configure calico
+#   run_once: true
+#   become: true
+#   ansible.builtin.shell:
+#     cmd: |
+#       kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=kubernetes-internal-ip
+#       kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_IPIP=Never
+#       kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_VXLAN=Never
+#       kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_NAT_OUTGOING=false
+#       kubectl wait pods -n kube-system -l k8s-app=calico-node --for condition=Ready --timeout=60s
+#       calicoctl patch pool default-ipv4-ippool --patch='{"spec":{"ipipMode":"Never"}}'
+#       calicoctl patch pool default-ipv4-ippool --patch='{"spec":{"vxlanMode":"Never"}}'
+#       calicoctl patch pool default-ipv4-ippool --patch='{"spec":{"natOutgoing":false}}'
+#       kubectl label node kube-ctrl01 topology.istio.io/subzone=rack-10-0-1
+#       kubectl label node kube-node01 topology.istio.io/subzone=rack-10-0-1
+#       kubectl label node kube-ctrl02 topology.istio.io/subzone=rack-10-0-2
+#       kubectl label node kube-node02 topology.istio.io/subzone=rack-10-0-2
+#       kubectl label node kube-ctrl03 topology.istio.io/subzone=rack-10-0-3
+#       kubectl label node kube-node03 topology.istio.io/subzone=rack-10-0-3
+#       calicoctl patch node kube-ctrl01 --patch='{"spec":{"bgp":{"asNumber":64513}}}'
+#       calicoctl patch node kube-node01 --patch='{"spec":{"bgp":{"asNumber":64513}}}'
+#       calicoctl patch node kube-ctrl02 --patch='{"spec":{"bgp":{"asNumber":64514}}}'
+#       calicoctl patch node kube-node02 --patch='{"spec":{"bgp":{"asNumber":64514}}}'
+#       calicoctl patch node kube-ctrl03 --patch='{"spec":{"bgp":{"asNumber":64515}}}'
+#       calicoctl patch node kube-node03 --patch='{"spec":{"bgp":{"asNumber":64515}}}'
+#       calicoctl apply -f /root/calico-bgppeer.yml
+#       calicoctl apply -f /root/calico-bgpconfiguration.yml
+#   when:
+#     - kube_common_master == inventory_hostname
+#   tags: [kubeadm]
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

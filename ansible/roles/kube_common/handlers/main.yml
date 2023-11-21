@@ -1,0 +1,14 @@
+---
+- name: Reload sysctls
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-sysctl.service
+    state: restarted
+
+
+- name: Restart kubelet
+  become: true
+  ansible.builtin.systemd:
+    name: kubelet.service
+    state: restarted
+

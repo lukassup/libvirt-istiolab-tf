@@ -1,0 +1,12 @@
+---
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  nodeToNodeMeshEnabled: false
+  logSeverityScreen: Info
+  bindMode: NodeIP
+  ignoredInterfaces: [vrf-main, eth0]
+  serviceClusterIPs:
+    - cidr: 10.1.1.0/24

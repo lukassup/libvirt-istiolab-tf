@@ -1,0 +1,12 @@
+---
+kube_ctrl_version: '{{ kube_common_version }}'
+kube_ctrl_pod_cidr: '10.20.0.0/16'
+kube_ctrl_svc_cidr: '10.10.10.0/24'
+
+kube_ctrl_calico_version: v3.26.3
+kube_ctrl_calico_manifest_url: 'https://raw.githubusercontent.com/projectcalico/calico/{{ kube_ctrl_calico_version }}/manifests/calico.yaml'
+kube_ctrl_calico_manifest_checksum: sha256:88bb86cf0033fa78d6cc36829c7de667605c32134a5c9e5dedec27d38c068fd0
+
+kube_ctrl_calicoctl_version: v3.26.3
+kube_ctrl_calicoctl_url: 'https://github.com/projectcalico/calico/releases/download/{{ kube_ctrl_calicoctl_version }}/calicoctl-linux-amd64'
+kube_ctrl_calicoctl_checksum: sha256:82bd7d12b0f6973f9593fb62f5410ad6a81ff6b79e92f1afd3e664202e8387cf

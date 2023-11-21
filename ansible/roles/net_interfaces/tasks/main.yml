@@ -1,0 +1,60 @@
+---
+- name: Install ifupdown2
+  become: true
+  ansible.builtin.apt:
+    name: ifupdown2
+    state: present
+
+- name: Interfaces config dir
+  become: true
+  ansible.builtin.file:
+    dest: /etc/network/interfaces.d
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Interfaces config default
+  become: true
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Restart networking
+
+- name: Interfaces config switchports
+  become: true
+  ansible.builtin.template:
+    src: "{{ net_interfaces_template }}"
+    dest: /etc/network/interfaces.d/switchports.intf
+    mode: "0644"
+    owner: root
+    group: root
+  when:
+    - net_interfaces_ports | length > 0
+  notify:
+    - Restart networking
+
+- name: Interfaces config eth1
+  become: true
+  ansible.builtin.template:
+    src: interfaces.eth1.j2
+    dest: /etc/network/interfaces.d/eth1.intf
+    mode: "0644"
+    owner: root
+    group: root
+  when:
+    - net_interfaces_eth1_address is defined
+  notify:
+    - Restart networking
+
+- name: Uninstall netplan
+  become: true
+  ansible.builtin.apt:
+    name: netplan.io
+    state: absent
+  notify:
+    - Reload systemd

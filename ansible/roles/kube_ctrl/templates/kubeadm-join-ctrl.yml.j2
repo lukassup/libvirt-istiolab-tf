@@ -1,0 +1,20 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: JoinConfiguration
+caCertPath: /etc/kubernetes/pki/ca.crt
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: "{{ kube_common_kubelet_address }}"
+    bindPort: 6443
+  certificateKey: '{{ kube_common_certificate_key }}'
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "{{ kube_common_master_ip }}:6443"
+    token: "{{ kube_common_bootstrap_token }}"
+    unsafeSkipCAVerification: true
+  timeout: 5m0s
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+  imagePullPolicy: IfNotPresent
+  name: "{{ inventory_hostname }}"
+  taints: null

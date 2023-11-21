@@ -1,0 +1,9 @@
+---
+net_tor: leaf01
+
+net_interfaces_loopback_cidr: 10.0.0.104/32
+net_interfaces_eth1_address: 10.0.1.2/24
+net_interfaces_eth1_gateway: 10.0.1.254
+
+kube_common_kubelet_address: 10.0.1.2
+

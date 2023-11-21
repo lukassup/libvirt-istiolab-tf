@@ -1,0 +1,7 @@
+---
+net_interfaces_loopback_cidr: 10.0.0.2/32
+net_interfaces_bridge_cidr: 10.0.2.254/24
+
+net_frr_bgp_asn: 64514
+net_frr_bgp_router_id: 10.0.0.2
+net_frr_bridge_cidr: '{{ net_interfaces_bridge_cidr }}'

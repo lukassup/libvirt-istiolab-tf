@@ -1,0 +1,16 @@
+%{ for role, hosts in roles ~}
+[${role}]
+%{ for host in hosts ~}
+${host}
+%{ endfor ~}
+
+%{ endfor ~}
+
+[all]
+%{ for host, vars in ansible_hostvars ~}
+${host} %{ for k,v in vars ~}${k}=${v} %{ endfor ~}
+
+%{ endfor ~}
+
+[all:vars]
+ansible_ssh_common_args='${ssh_opts}'

@@ -1,0 +1,4 @@
+---
+net_interfaces_template: interfaces.switchports.j2
+net_interfaces_ports: []
+net_interfaces_bridge_ports: []

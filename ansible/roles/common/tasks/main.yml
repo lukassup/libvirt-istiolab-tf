@@ -1,0 +1,72 @@
+---
+- name: Set hostname
+  become: true
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+    use: systemd
+
+- name: Configure host file
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/hosts
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      {% if "host" in group_names %}
+      {{ primary_ip }}    {{ inventory_hostname }}
+      {% endif %}
+      127.0.0.1    {{ inventory_hostname }} localhost
+      ::1		localhost ip6-localhost ip6-loopback
+      ff02::1		ip6-allnodes
+      ff02::2		ip6-allrouters
+  vars:
+    primary_ip: '{{ net_interfaces_eth1_address | split("/") | first }}'
+  # when:
+  #   - '"host" in group_names'
+
+- name: Update apt cache
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  throttle: 5
+
+- name: Create systemd-resolved config dir
+  become: true
+  ansible.builtin.file:
+    state: directory
+    dest: /etc/systemd/resolved.conf.d/
+    mode: '0755'
+    owner: root
+    group: root
+  when:
+    - '"host" in group_names'
+
+- name: Create systemd-resolved config for kube-dns
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/resolved.conf.d/kube-dns.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Resolve]
+      DNS=10.1.1.10
+      Domains=istio-system.svc.cluster1.local svc.cluster1.local ~cluster1.local
+      MulticastDNS=false
+      LLMNR=false
+  notify:
+    - Restart systemd-resolved
+  when:
+    - '"host" in group_names'
+
+- name: Symlink stub-resolver config
+  become: true
+  ansible.builtin.file:
+    dest: /etc/resolv.conf
+    src: /run/systemd/resolve/stub-resolv.conf
+    state: link
+  notify:
+    - Restart systemd-resolved
+  when:
+    - '"host" in group_names'

@@ -1,0 +1,3 @@
+---
+net_interfaces_loopback_cidr: 10.0.0.253/32
+net_frr_bgp_router_id: 10.0.0.253

@@ -1,0 +1,7 @@
+version: 2
+ethernets:
+  eth0:
+    set-name: eth0
+    dhcp4: true
+    match:
+      macaddress: '${mgmt_mac}'

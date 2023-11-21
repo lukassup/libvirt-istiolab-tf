@@ -1,0 +1,86 @@
+---
+- name: Apt repo kubernetes
+  block:
+    - name: Apt repo kubernetes | Key
+      become: true
+      ansible.builtin.get_url:
+        url: "{{ kube_common_gpg_key_url }}"
+        dest: "{{ kube_common_gpg_key_file }}"
+        checksum: "{{ kube_common_gpg_key_checksum }}"
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Apt repo kubernetes | Apt source
+      become: true
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64 signed-by={{ kube_common_gpg_key_file }}] {{ kube_common_apt_repo_url }} /
+        state: present
+        filename: kubernetes
+  rescue:
+    - name: Apt repo kubernetes | Cleanup
+      ansible.builtin.file:
+        become: true
+        dest: '{{ item }}'
+        state: absent
+      with_items:
+        - '{{ kube_common_gpg_key_file }}'
+        - /etc/apt/sources.list.d/kubernetes.list
+    - name: Apt repo kubernetes | Force failure
+      ansible.builtin.shell: /bin/false
+
+- name: Install kubernetes packages
+  become: true
+  vars:
+    kube_common_package_version: "{{ kube_common_version }}-*"
+  ansible.builtin.apt:
+    pkg:
+      - kubectl={{ kube_common_package_version }}
+      - kubeadm={{ kube_common_package_version }}
+      - kubelet={{ kube_common_package_version }}
+
+- name: Mark kubernetes packages as hold
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: '{{ item }}'
+    selection: hold
+  with_items:
+    - kubectl
+    - kubeadm
+    - kubelet
+
+- name: Configure sysctls for kubernetes
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      net.ipv4.ip_forward                 = 1
+      net.ipv6.conf.default.forwarding    = 1
+      net.ipv6.conf.all.forwarding        = 1
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+  notify:
+    - Reload sysctls
+
+- name: Enable kubelet service
+  become: true
+  ansible.builtin.systemd:
+    name: kubelet.service
+    state: started
+    enabled: true
+
+- name: Install calicoctl
+  become: true
+  ansible.builtin.get_url:
+    dest: "/usr/local/bin/calicoctl"
+    url: "{{ kube_common_calicoctl_url }}"
+    checksum: "{{ kube_common_calicoctl_checksum }}"
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

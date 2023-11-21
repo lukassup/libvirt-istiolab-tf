@@ -1,0 +1,11 @@
+---
+- name: Reload systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart networking
+  become: true
+  ansible.builtin.systemd:
+    name: networking.service
+    state: restarted

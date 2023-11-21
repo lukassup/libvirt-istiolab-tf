@@ -1,0 +1,12 @@
+auto eth0
+iface eth0
+  use dhcp
+
+auto vrf-main
+iface vrf-main
+  address {{ net_interfaces_loopback_cidr }}
+  vrf-table auto
+  vrf-default-route yes
+
+
+source /etc/network/interfaces.d/*.intf

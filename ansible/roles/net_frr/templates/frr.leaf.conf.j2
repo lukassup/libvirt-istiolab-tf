@@ -1,0 +1,32 @@
+log syslog informational
+
+route-map REDISTRIBUTE permit 10
+  match interface vrf-main
+
+route-map REDISTRIBUTE permit 15
+  match interface br0
+
+route-map UCMP_ENABLE permit 10
+  set extcommunity bandwidth num-multipaths
+
+router bgp {{ net_frr_bgp_asn }} vrf vrf-main
+  bgp router-id {{ net_frr_bgp_router_id }}
+  bgp bestpath as-path multipath-relax
+  !bgp bestpath bandwidth ignore
+  !bgp bestpath bandwidth skip-missing
+  bgp bestpath bandwidth default-weight-for-missing
+  neighbor SPINES peer-group
+  neighbor SPINES bfd
+  neighbor SPINES remote-as external
+  {% for interface in net_frr_peer_interfaces %}
+  neighbor {{ interface }} interface peer-group SPINES
+  {% endfor %}
+  neighbor KUBE peer-group
+  neighbor KUBE remote-as internal
+  bgp listen range {{ net_frr_bridge_cidr }} peer-group KUBE
+  address-family ipv4 unicast
+    neighbor SPINES activate
+    !neighbor SPINES route-map UCMP_ENABLE out
+    neighbor KUBE activate
+    redistribute connected route-map REDISTRIBUTE
+  exit-address-family

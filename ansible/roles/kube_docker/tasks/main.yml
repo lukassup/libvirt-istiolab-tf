@@ -1,0 +1,84 @@
+---
+- name: Apt repo docker
+  block:
+    - name: Apt repo docker | Key
+      become: true
+      ansible.builtin.get_url:
+        url: "{{ kube_docker_gpg_key_url }}"
+        dest: "{{ kube_docker_gpg_key_file }}"
+        checksum: "{{ kube_docker_gpg_key_checksum }}"
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Apt repo docker | Apt source
+      become: true
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by={{ kube_docker_gpg_key_file }}] {{ kube_docker_apt_repo_url }} bookworm stable"
+        state: present
+        filename: docker
+  rescue:
+    - name: Apt repo docker | Cleanup
+      become: true
+      ansible.builtin.file:
+        dest: '{{ item }}'
+        state: absent
+      with_items:
+        - '{{ kube_docker_gpg_key_file }}'
+        - /etc/apt/sources.list.d/docker.list
+    - name: Apt repo docker | Force failure
+      ansible.builtin.shell: /bin/false
+
+- name: Install containerd package
+  become: true
+  ansible.builtin.apt:
+    name: 'containerd.io={{ kube_docker_containerd_version }}-*'
+
+- name: Mark containerd package as hold
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: containerd.io
+    selection: hold
+
+- name: Configure kernel modules for containerd
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/70-containerd.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      overlay
+      br_netfilter
+  notify:
+    - Reload kernel modules
+
+- name: Create containerd config dir
+  become: true
+  ansible.builtin.file:
+    state: directory
+    dest: /etc/containerd
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Copy containerd config
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/containerd/config.toml
+    src: containerd.toml
+    mode: '0644'
+    owner: root
+    group: root
+  notify:
+    - Restart containerd service
+
+- name: Enable containerd service
+  become: true
+  ansible.builtin.systemd:
+    name: containerd
+    state: started
+    enabled: true
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

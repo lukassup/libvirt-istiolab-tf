@@ -1,0 +1,35 @@
+---
+- name: Install package
+  become: true
+  ansible.builtin.apt:
+    pkg:
+      - frr
+
+- name: Frr config daemons
+  become: true
+  ansible.builtin.copy:
+    src: daemons
+    dest: /etc/frr/daemons
+    owner: frr
+    group: frr
+    mode: "0640"
+  notify:
+    - Restart frr
+
+- name: Frr config frr.conf
+  become: true
+  ansible.builtin.template:
+    src: "{{ net_frr_template }}"
+    dest: /etc/frr/frr.conf
+    owner: frr
+    group: frr
+    mode: "0640"
+  notify:
+    - Reload frr
+
+- name: Service frr
+  become: true
+  ansible.builtin.systemd:
+    name: frr.service
+    state: started
+    enabled: true

@@ -1,0 +1,5 @@
+---
+net_interfaces_eth1_route: 10.0.0.0/8
+
+kube_common_master: kube-ctrl01
+kube_common_master_ip: 10.0.1.1

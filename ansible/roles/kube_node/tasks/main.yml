@@ -1,0 +1,23 @@
+---
+- name: Copy kubeadm-join config
+  become: true
+  ansible.builtin.template:
+    dest: /root/kubeadm-join.yml
+    src: kubeadm-join.yml.j2
+    mode: "0644"
+    owner: root
+    group: root
+    validate: kubeadm config validate --config %s
+  vars:
+    cert_sans: '{{ groups["kube_ctrl"] + groups["kube_ctrl"] | map("extract", hostvars, "kube_common_kubelet_address") + ["localhost", "127.0.0.1", "::1"] }}'
+  tags: [kubeadm]
+
+- name: Join Kubernetes node to cluster
+  become: true
+  ansible.builtin.command:
+    cmd: kubeadm join --config /root/kubeadm-join.yml
+    creates: /etc/kubernetes/pki/ca.crt
+  tags: [kubeadm]
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

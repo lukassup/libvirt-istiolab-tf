@@ -1,0 +1,27 @@
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: rack-10-0-1-tor
+spec:
+  asNumber: 64513
+  nodeSelector: topology.istio.io/subzone == 'rack-10-0-1'
+  peerIP: 10.0.1.254
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: rack-10-0-2-tor
+spec:
+  asNumber: 64514
+  nodeSelector: topology.istio.io/subzone == 'rack-10-0-2'
+  peerIP: 10.0.2.254
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: rack-10-0-3-tor
+spec:
+  asNumber: 64515
+  nodeSelector: topology.istio.io/subzone == 'rack-10-0-3'
+  peerIP: 10.0.3.254

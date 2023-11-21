@@ -1,0 +1,12 @@
+---
+- name: Restart frr
+  become: true
+  ansible.builtin.systemd:
+    name: frr.service
+    state: restarted
+
+- name: Reload frr
+  become: true
+  ansible.builtin.systemd:
+    name: frr.service
+    state: reloaded

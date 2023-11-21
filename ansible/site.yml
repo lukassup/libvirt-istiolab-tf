@@ -1,0 +1,81 @@
+---
+- name: Common
+  hosts: all
+  gather_facts: false
+  pre_tasks:
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        delay: 0
+        timeout: 30
+  roles:
+    - common
+  tags:
+    - kube
+    - net
+    - ingress
+
+- name: Network common
+  hosts: leaf,spine
+  gather_facts: false
+  roles:
+    - net_common
+  tags:
+    - net
+
+- name: Network interfaces
+  hosts: leaf,spine,kube_ctrl,kube_node,istio_ingress
+  gather_facts: false
+  roles:
+    - net_interfaces
+  tags:
+    - net
+    - kube
+
+- name: Network FRR
+  hosts: leaf,spine
+  gather_facts: false
+  roles:
+    - net_frr
+  tags:
+    - net
+
+- name: Network spine
+  hosts: spine
+  gather_facts: false
+  roles:
+    - net_spine
+  tags:
+    - net
+
+- name: Network leaf
+  hosts: leaf
+  gather_facts: false
+  roles:
+    - net_leaf
+  tags:
+    - net
+
+- name: Kubernetes control plane
+  hosts: kube_ctrl
+  gather_facts: false
+  roles:
+    - kube_ctrl
+    - kube_istio
+  tags:
+    - kube
+
+- name: Kubernetes nodes
+  hosts: kube_node
+  gather_facts: false
+  roles:
+    - kube_node
+  tags:
+    - kube
+
+- name: Istio ingress
+  hosts: istio_ingress
+  gather_facts: false
+  roles:
+    - istio_ingress
+  tags:
+    - istio

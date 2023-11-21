@@ -1,0 +1,84 @@
+---
+- name: Enable kernel modules
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/80-istio.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      br_netfilter
+      iptable_mangle
+      iptable_nat
+      iptable_raw
+      xt_REDIRECT
+      xt_connmark
+      xt_conntrack
+      xt_mark
+      xt_owner
+      xt_tcpudp
+  notify:
+    - Reload kernel modules
+  tags: [istio]
+
+- name: Enable kernel modules for ipv6
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/80-istio-ipv6.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      ip6table_mangle
+      ip6table_nat
+      ip6table_raw
+  notify:
+    - Reload kernel modules
+  when:
+    - kube_istio_ipv6_enabled
+  tags: [istio]
+
+- name: Download istioctl
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ kube_istio_istioctl_url }}"
+    dest: /tmp/istio.tar.gz
+    checksum: "{{ kube_istio_istioctl_checksum }}"
+    mode: "0644"
+    owner: root
+    group: root
+  tags: [istio]
+
+- name: Create istio dir
+  become: true
+  ansible.builtin.file:
+    state: directory
+    dest: /usr/local/lib/istio
+    mode: "0755"
+    owner: root
+    group: root
+  tags: [istio]
+
+- name: Install istioctl
+  become: true
+  ansible.builtin.unarchive:
+    src: /tmp/istio.tar.gz
+    dest: /usr/local/lib/istio/
+    creates: /usr/local/lib/istio/bin/istioctl
+    remote_src: true
+    owner: root
+    group: root
+    extra_opts:
+      - --strip-components=1
+  tags: [istio]
+
+
+- name: Link istioctl binary
+  become: true
+  ansible.builtin.file:
+    state: link
+    dest: /usr/local/bin/istioctl
+    src: /usr/local/lib/istio/bin/istioctl
+    owner: root
+    group: root
+  tags: [istio]

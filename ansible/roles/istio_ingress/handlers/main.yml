@@ -1,0 +1,12 @@
+---
+- name: Reload kernel modules
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-modules-load.service
+    state: restarted
+
+- name: Reload sysctls
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-sysctl.service
+    state: restarted

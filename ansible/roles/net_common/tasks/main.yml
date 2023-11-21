@@ -1,0 +1,26 @@
+---
+- name: Install lldpd
+  become: true
+  ansible.builtin.apt:
+    name: lldpd
+
+- name: Service lldpd
+  become: true
+  ansible.builtin.systemd:
+    name: lldpd.service
+    state: started
+    enabled: true
+
+- name: Sysctl net
+  become: true
+  ansible.builtin.copy:
+    content: |
+      net.ipv4.ip_forward=1
+      net.ipv6.conf.default.forwarding=1
+      net.ipv6.conf.all.forwarding=1
+    dest: /etc/sysctl.d/30-ipforward.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Sysctl reload

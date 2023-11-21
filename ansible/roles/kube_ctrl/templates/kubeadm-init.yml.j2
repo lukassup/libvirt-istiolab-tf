@@ -1,0 +1,44 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+bootstrapTokens:
+- groups:
+  - system:bootstrappers:kubeadm:default-node-token
+  token: "{{ kube_common_bootstrap_token }}"
+  ttl: 24h0m0s
+  usages:
+  - signing
+  - authentication
+certificateKey: '{{ kube_common_certificate_key }}'
+localAPIEndpoint:
+  advertiseAddress: "{{ kube_common_kubelet_address }}"
+  bindPort: 6443
+nodeRegistration:
+  imagePullPolicy: IfNotPresent
+  name: "{{ inventory_hostname }}"
+---
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta3
+kubernetesVersion: "{{ kube_common_version }}"
+clusterName: cluster1
+controlPlaneEndpoint: "{{ kube_common_master_ip }}:6443"
+networking:
+  dnsDomain: cluster1.local
+  serviceSubnet: "{{ kube_ctrl_svc_cidr }}"
+  podSubnet: "{{ kube_ctrl_pod_cidr }}"
+apiServer:
+  timeoutForControlPlane: 4m0s
+  certSANs:
+{% for san in cert_sans %}
+    - "{{ san }}"
+{% endfor %}
+imageRepository: registry.k8s.io
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: systemd
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: ipvs
+ipvs:
+  strictARP: true

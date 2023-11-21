@@ -1,0 +1,23 @@
+---
+kube_common_version_major: 1.28
+kube_common_version_minor: 2
+kube_common_version: "{{ kube_common_version_major }}.{{ kube_common_version_minor }}"
+kube_common_gpg_key_checksum: sha256:5fe267a9ae47ffd566624057f2c8f64ab8a786a9c650e92cc22135381b04f12b
+kube_common_gpg_key_url: https://pkgs.k8s.io/core:/stable:/v{{ kube_common_version_major }}/deb/Release.key
+kube_common_gpg_key_file: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+kube_common_apt_repo_url: https://pkgs.k8s.io/core:/stable:/v{{ kube_common_version_major }}/deb/
+
+kube_common_master: localhost
+kube_common_master_ip: 127.0.0.1
+kube_common_kubelet_address: 127.0.0.1
+kube_common_bootstrap_token: abcdef.0123456789abcdef
+kube_common_certificate_key: 1785feea056b3dc228963854ff9d2c2b2e9dfc28e94eb69a4377434ac1d24e63
+kube_common_bgp_peer: '{{ net_interfaces_eth1_gateway }}'
+
+kube_common_calico_version: v3.26.3
+kube_common_calico_manifest_url: 'https://raw.githubusercontent.com/projectcalico/calico/{{ kube_common_calico_version }}/manifests/calico.yaml'
+kube_common_calico_manifest_checksum: sha256:88bb86cf0033fa78d6cc36829c7de667605c32134a5c9e5dedec27d38c068fd0
+
+kube_common_calicoctl_version: '{{ kube_common_calico_version }}'
+kube_common_calicoctl_url: 'https://github.com/projectcalico/calico/releases/download/{{ kube_common_calicoctl_version }}/calicoctl-linux-amd64'
+kube_common_calicoctl_checksum: sha256:82bd7d12b0f6973f9593fb62f5410ad6a81ff6b79e92f1afd3e664202e8387cf

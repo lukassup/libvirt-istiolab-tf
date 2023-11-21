@@ -1,0 +1,5 @@
+---
+kube_istio_version: 1.19.3
+kube_istio_istioctl_url: https://github.com/istio/istio/releases/download/{{ kube_istio_version }}/istio-{{ kube_istio_version }}-linux-amd64.tar.gz
+kube_istio_istioctl_checksum: sha256:76068a07f76b62129c0d475bad477ffc1c06b3795cce6fae1eb3fb882a66ad35
+kube_istio_ipv6_enabled: false

@@ -1,0 +1,4 @@
+---
+net_interfaces_loopback_cidr: 10.0.0.109/32
+net_interfaces_eth1_address: 10.0.3.3/24
+net_interfaces_eth1_gateway: 10.0.3.254

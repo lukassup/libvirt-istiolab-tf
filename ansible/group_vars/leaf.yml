@@ -1,0 +1,7 @@
+---
+net_frr_template: frr.leaf.conf.j2
+net_frr_peer_interfaces: [swp1, swp2]
+
+net_interfaces_template: interfaces.leaf.j2
+net_interfaces_bridge_ports: [swp3, swp4, swp5]
+net_interfaces_ports: [swp1, swp2, swp3, swp4, swp5]

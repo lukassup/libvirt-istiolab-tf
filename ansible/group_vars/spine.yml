@@ -1,0 +1,7 @@
+---
+net_interfaces_ports: [swp1, swp2, swp3]
+
+net_frr_template: frr.spine.conf.j2
+net_frr_bgp_asn: 64512
+net_frr_peer_interfaces: '{{ net_interfaces_ports }}'
+

@@ -1,0 +1,40 @@
+graph vx {
+  // hosts
+  "oob-mgmt-server"[function="oob_mgmt_server"]
+  "leaf01"
+  "leaf02"
+  "leaf03"
+  "spine01"[function="spine"]
+  "spine02"[function="spine"]
+
+  "kube-ctrl01"[function="host" extra_role="kube_ctrl" cpu="2" memory="2048" disk="16"]
+  "kube-ctrl02"[function="host" extra_role="kube_ctrl" cpu="2" memory="2048" disk="16"]
+  "kube-ctrl03"[function="host" extra_role="kube_ctrl" cpu="2" memory="2048" disk="16"]
+  "kube-node01"[function="host" extra_role="kube_node" cpu="2" memory="4096" disk="8"]
+  "kube-node02"[function="host" extra_role="kube_node" cpu="2" memory="4096" disk="8"]
+  "kube-node03"[function="host" extra_role="kube_node" cpu="2" memory="4096" disk="8"]
+  "istio-ingress01"[function="host" extra_role="istio_ingress" cpu="1" memory="512" disk="8"]
+  "istio-ingress02"[function="host" extra_role="istio_ingress" cpu="1" memory="512" disk="8"]
+  "istio-ingress03"[function="host" extra_role="istio_ingress" cpu="1" memory="512" disk="8"]
+
+  // switch links
+  "leaf01":"swp1" -- "spine01":"swp1"
+  "leaf01":"swp2" -- "spine02":"swp1"
+  "leaf02":"swp1" -- "spine01":"swp2"
+  "leaf02":"swp2" -- "spine02":"swp2"
+  "leaf03":"swp1" -- "spine01":"swp3"
+  "leaf03":"swp2" -- "spine02":"swp3"
+
+  // host links
+  "leaf01":"swp3" -- "kube-ctrl01":"eth1"
+  "leaf01":"swp4" -- "kube-node01":"eth1"
+  "leaf01":"swp5" -- "istio-ingress01":"eth1"
+
+  "leaf02":"swp3" -- "kube-ctrl02":"eth1"
+  "leaf02":"swp4" -- "kube-node02":"eth1"
+  "leaf02":"swp5" -- "istio-ingress02":"eth1"
+
+  "leaf03":"swp3" -- "kube-ctrl03":"eth1"
+  "leaf03":"swp4" -- "kube-node03":"eth1"
+  "leaf03":"swp5" -- "istio-ingress03":"eth1"
+}

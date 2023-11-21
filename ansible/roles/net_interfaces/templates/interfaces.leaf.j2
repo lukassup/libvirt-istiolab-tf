@@ -1,0 +1,14 @@
+{% for interface in net_interfaces_ports %}
+auto {{ interface }}
+iface {{ interface }}
+  vrf vrf-main
+
+{% endfor %}
+
+auto br0
+iface br0
+  vrf vrf-main
+  bridge-ports {{ net_interfaces_bridge_ports | join(' ') }}
+  bridge-fd 0
+  bridge-stp off
+  address {{ net_interfaces_bridge_cidr }}

@@ -1,0 +1,2 @@
+---
+net_frr_frrconf_template: frr.conf.j2

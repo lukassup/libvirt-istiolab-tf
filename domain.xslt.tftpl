@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<xsl:stylesheet version="1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output omit-xml-declaration="yes" indent="yes"/>
+  <xsl:template match="node()|@*">
+     <xsl:copy>
+       <xsl:apply-templates select="node()|@*"/>
+     </xsl:copy>
+  </xsl:template>
+
+  <!-- Enable UEFI boot -->
+  <xsl:template match="/domain/os">
+    <xsl:copy>
+      <xsl:attribute name="firmware">efi</xsl:attribute>
+      <xsl:apply-templates select="node()|@*" />
+    </xsl:copy>
+  </xsl:template>
+  <xsl:template match="/domain/os/@firmware">
+    <xsl:attribute name="firmware">efi</xsl:attribute>
+  </xsl:template>
+
+  <!-- Replace IDE bus with SATA (required for q35) -->
+  <xsl:template match="/domain/devices/controller[@type='ide']/@type">
+    <xsl:attribute name="type">sata</xsl:attribute>
+  </xsl:template>
+
+  <!-- Replace CDROM bus with SCSI (required for q35) -->
+  <xsl:template match="/domain/devices/disk[@device='cdrom']/target/@bus">
+    <xsl:attribute name="bus">scsi</xsl:attribute>
+  </xsl:template>
+
+  <xsl:template match="/domain/devices">
+    <xsl:copy>
+      <xsl:apply-templates select="node()|@*"/>
+
+      <controller type='scsi' index='0' model='virtio-scsi' />
+
+%{ for interface_id, link in links ~}
+      <interface type='udp'>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x${format("%02X", 16 + interface_id)}' function='0x0' />
+        <mac address="${link.src_mac}" />
+        <source address='${cidrhost(tunnel_cidr, link.dst_id)}' port='${10000 + link.link_id}'>
+          <local address='${cidrhost(tunnel_cidr, link.src_id)}' port='${10000 + link.link_id}'/>
+        </source>
+      </interface>
+
+%{ endfor ~}
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>

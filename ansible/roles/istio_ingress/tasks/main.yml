@@ -1,0 +1,215 @@
+---
+- name: Enable kernel modules
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/80-istio.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      br_netfilter
+      iptable_mangle
+      iptable_nat
+      iptable_raw
+      xt_REDIRECT
+      xt_connmark
+      xt_conntrack
+      xt_mark
+      xt_owner
+      xt_tcpudp
+  notify:
+    - Reload kernel modules
+  tags: [istio]
+
+- name: Enable kernel modules for ipv6
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/80-istio-ipv6.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      ip6table_mangle
+      ip6table_nat
+      ip6table_raw
+  notify:
+    - Reload kernel modules
+  when:
+    - istio_ingress_ipv6_enabled
+  tags: [istio]
+
+- name: Configure sysctls for Istio Ingress
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-istio-ingress.conf
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      net.ipv4.ip_nonlocal_bind           = 1
+      net.ipv6.ip_nonlocal_bind           = 1
+      net.ipv4.ip_forward                 = 1
+      net.ipv6.conf.default.forwarding    = 1
+      net.ipv6.conf.all.forwarding        = 1
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+  notify:
+    - Reload sysctls
+  tags: [istio]
+
+- name: Install calicoctl
+  become: true
+  ansible.builtin.get_url:
+    dest: /usr/local/bin/calicoctl
+    url: "{{ kube_common_calicoctl_url }}"
+    checksum: "{{ kube_common_calicoctl_checksum }}"
+    mode: "0755"
+    owner: root
+    group: root
+  tags: [calico]
+
+- name: Download istioctl
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ istio_ingress_istioctl_url }}"
+    dest: /tmp/istio.tar.gz
+    checksum: "{{ istio_ingress_istioctl_checksum }}"
+    mode: "0644"
+    owner: root
+    group: root
+  tags: [istio]
+
+- name: Create istio dir
+  become: true
+  ansible.builtin.file:
+    state: directory
+    dest: /usr/local/lib/istio
+    mode: "0755"
+    owner: root
+    group: root
+  tags: [istio]
+
+- name: Install istioctl
+  become: true
+  ansible.builtin.unarchive:
+    src: /tmp/istio.tar.gz
+    dest: /usr/local/lib/istio/
+    creates: /usr/local/lib/istio/bin/istioctl
+    remote_src: true
+    owner: root
+    group: root
+    extra_opts:
+      - --strip-components=1
+  tags: [istio]
+
+
+- name: Link istioctl binary
+  become: true
+  ansible.builtin.file:
+    state: link
+    dest: /usr/local/bin/istioctl
+    src: /usr/local/lib/istio/bin/istioctl
+    owner: root
+    group: root
+  tags: [istio]
+
+- name: Download istio-sidecar package
+  become: true
+  ansible.builtin.get_url:
+    url: '{{ istio_ingress_sidecar_url }}'
+    checksum: '{{ istio_ingress_sidecar_checksum }}'
+    dest: /var/cache/apt/archives/istio-sidecar.deb
+    mode: '0644'
+    owner: root
+    group: root
+  tags: [istio]
+
+- name: Install istio-sidecar package
+  become: true
+  ansible.builtin.apt:
+    deb: /var/cache/apt/archives/istio-sidecar.deb
+  tags: [istio]
+
+- name: Create istio and envoy dirs
+  become: true
+  ansible.builtin.file:
+    state: directory
+    dest: '{{ item }}'
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - /etc/istio
+    - /etc/istio/config
+    - /var/lib/istio
+    - /var/run/secrets
+    - /var/run/secrets/tokens
+  tags: [istio]
+
+- name: Create istio envoy dir
+  become: true
+  ansible.builtin.file:
+    state: directory
+    dest: '{{ item }}'
+    owner: istio-proxy
+    group: istio-proxy
+    mode: '0755'
+  with_items:
+    - /var/lib/istio/envoy
+  tags: [istio]
+
+- name: Create istio envoy proxy config
+  become: true
+  ansible.builtin.copy:
+    dest: /var/lib/istio/envoy/cluster.env
+    mode: '0644'
+    owner: istio-proxy
+    group: istio-proxy
+    content: |
+      CANONICAL_REVISION='latest'
+      CANONICAL_SERVICE='istio-ingressgateway'
+      ISTIO_NAMESPACE='istio-system'
+      ISTIO_META_CLUSTER_ID='cluster1'
+      ISTIO_META_MESH_ID='mesh1'
+      ISTIO_METAJSON_LABELS='{"istio":"ingressgateway","istio.io/rev":"default","app":"'$CANONICAL_SERVICE'","service.istio.io/canonical-name":"'$CANONICAL_SERVICE'","service.istio.io/canonical-revision":"'$CANONICAL_REVISION'"}'
+      ISTIO_META_NETWORK=''
+      ISTIO_META_WORKLOAD_NAME="$CANONICAL_SERVICE"
+      ISTIO_SERVICE="${CANONICAL_SERVICE}.${ISTIO_NAMESPACE}"
+      POD_NAMESPACE="$ISTIO_NAMESPACE"
+      SERVICE_ACCOUNT='istio-ingressgateway-service-account'
+      TRUST_DOMAIN='cluster.local'
+      #ISTIO_META_DNS_CAPTURE='true'
+      ISTIO_SERVICE_CIDR='*'
+      ISTIO_INBOUND_PORTS='*'
+      ISTIO_LOCAL_EXCLUDE_PORTS='22,15090,15021,15020'
+
+      # extra
+      ISTIO_AGENT_FLAGS="router --domain=${ISTIO_NAMESPACE}.svc.cluster1.local"
+      #ISTIO_META_DNS_AUTO_ALLOCATE='true'
+      ISTIO_META_OWNER="kubernetes://apis/apps/v1/namespaces/${ISTIO_NAMESPACE}/deployments/${CANONICAL_SERVICE}"
+      POD_NAME='{{ inventory_hostname }}'
+      #HOST_IP='10.0.1.3'
+      ISTIO_CUSTOM_IP_TABLES='true'
+      #IPTABLES_TRACE_LOGGING='true'
+      INBOUND_INTERCEPTION_MODE='NONE'
+      EXEC_USER=root
+  tags: [istio]
+
+- name: Create istio mesh config
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/istio/config/mesh
+    mode: '0644'
+    owner: istio-proxy
+    group: istio-proxy
+    content: |
+      defaultConfig:
+        discoveryAddress: {{ istio_ingress_discovery_address }}
+        readinessProbe:
+          httpGet:
+            path: /healthz/ready
+            port: 15021
+          initialDelaySeconds: 1
+          periodSeconds: 5
+  tags: [istio]
+
