@@ -7,7 +7,7 @@ graph TD;
     internet --> eth0;
     eth0 --> virbrN;
     subgraph vrf-main
-      leaf01 & leaf02 -->|swpN| spine01 & spine02;
+      leaf01 & leaf02 & leaf03 -->|swpN| spine01 & spine02;
       kube-ctrl01 --> leaf01;
       kube-node01 --> leaf01;
       istio-ingress01 --> leaf01;
@@ -19,7 +19,7 @@ graph TD;
       istio-ingress03 --> leaf03;
     end
     subgraph mgmt-net
-      oob-mgmt-server & leaf01 & leaf02 & spine01 & spine02 -->|eth0| virbrN;
+      oob-mgmt-server & leaf01 & leaf02 & leaf03 & spine01 & spine02 -->|eth0| virbrN;
     end
 ```
 
