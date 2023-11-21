@@ -1,4 +1,4 @@
-# libvirt-network-topology-tf
+# libvirt-istiolab-tf
 
 Some shell Terraform scipts to create a basic 2 leaf 2 spine topology from Debian Cloud machines.
 
