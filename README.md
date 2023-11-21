@@ -1,6 +1,6 @@
 # libvirt-istiolab-tf
 
-Some shell Terraform scipts to create a basic 2 leaf 2 spine topology from Debian Cloud machines.
+Some Terraform and Ansible scipts to create a 3 leaf + 2 spine + 9 host topology from Debian Cloud machines.
 
 ```mermaid
 graph TD;
