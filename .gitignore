@@ -1,7 +1,9 @@
-**/.venv/*
-ansible/inventory
+*.applied
+*.destroyed
+ansible/*.inventory
 topology.dot.json
 terraform.plan
+**/.venv/*
 .vscode/
 
 ### Terraform ###
