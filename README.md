@@ -32,7 +32,7 @@ graph TD;
 1. Use `make` to converge Ansible configuration. This provisions Kubernetes cluster using `kubeadm`:
     - `kube-ctrl01..03` - control plane nodes
     - `kube-node01..03` - worker nodes
-    - `istio-ingress01..03` - Istio external ingress gateway nodes (WIP)
+    - `istio-ingress01..03` - Istio external ingress gateway nodes
     ```command
     make converge
     ```
