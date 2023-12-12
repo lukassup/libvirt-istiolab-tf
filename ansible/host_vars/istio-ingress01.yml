@@ -2,3 +2,6 @@
 net_interfaces_loopback_cidr: 10.0.0.107/32
 net_interfaces_eth1_address: 10.0.1.3/24
 net_interfaces_eth1_gateway: 10.0.1.254
+
+net_frr_bgp_asn: 64513
+net_frr_bgp_router_id: 10.0.1.3

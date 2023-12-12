@@ -106,10 +106,6 @@
     mode: "0644"
     owner: root
     group: root
-  #vars:
-  #  bgp_asn: '{{ hostvars[net_tor].net_frr_bgp_asn }}'
-  #  bgp_peer: '{{ kube_common_bgp_peer }}'
-  #  rack_id: 'rack-{{ kube_common_bgp_peer.split(".")[0:3] | join("-") }}'
   tags: [calico]
 
 - name: Install calico bgpconfiguration mainfest
@@ -121,45 +117,6 @@
     owner: root
     group: root
   tags: [calico]
-
-#- name: Install calico manifest
-#  become: true
-#  ansible.builtin.command:
-#    cmd: kubectl apply -f /root/calico.yaml
-#  when:
-#    - kube_common_master == inventory_hostname
-#  tags: [kubeadm]
-
-# - name: Configure calico
-#   run_once: true
-#   become: true
-#   ansible.builtin.shell:
-#     cmd: |
-#       kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=kubernetes-internal-ip
-#       kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_IPIP=Never
-#       kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_VXLAN=Never
-#       kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_NAT_OUTGOING=false
-#       kubectl wait pods -n kube-system -l k8s-app=calico-node --for condition=Ready --timeout=60s
-#       calicoctl patch pool default-ipv4-ippool --patch='{"spec":{"ipipMode":"Never"}}'
-#       calicoctl patch pool default-ipv4-ippool --patch='{"spec":{"vxlanMode":"Never"}}'
-#       calicoctl patch pool default-ipv4-ippool --patch='{"spec":{"natOutgoing":false}}'
-#       kubectl label node kube-ctrl01 topology.istio.io/subzone=rack-10-0-1
-#       kubectl label node kube-node01 topology.istio.io/subzone=rack-10-0-1
-#       kubectl label node kube-ctrl02 topology.istio.io/subzone=rack-10-0-2
-#       kubectl label node kube-node02 topology.istio.io/subzone=rack-10-0-2
-#       kubectl label node kube-ctrl03 topology.istio.io/subzone=rack-10-0-3
-#       kubectl label node kube-node03 topology.istio.io/subzone=rack-10-0-3
-#       calicoctl patch node kube-ctrl01 --patch='{"spec":{"bgp":{"asNumber":64513}}}'
-#       calicoctl patch node kube-node01 --patch='{"spec":{"bgp":{"asNumber":64513}}}'
-#       calicoctl patch node kube-ctrl02 --patch='{"spec":{"bgp":{"asNumber":64514}}}'
-#       calicoctl patch node kube-node02 --patch='{"spec":{"bgp":{"asNumber":64514}}}'
-#       calicoctl patch node kube-ctrl03 --patch='{"spec":{"bgp":{"asNumber":64515}}}'
-#       calicoctl patch node kube-node03 --patch='{"spec":{"bgp":{"asNumber":64515}}}'
-#       calicoctl apply -f /root/calico-bgppeer.yml
-#       calicoctl apply -f /root/calico-bgpconfiguration.yml
-#   when:
-#     - kube_common_master == inventory_hostname
-#   tags: [kubeadm]
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers

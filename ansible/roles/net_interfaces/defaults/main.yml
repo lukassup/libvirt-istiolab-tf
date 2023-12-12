@@ -1,3 +1,4 @@
 ---
 net_interfaces_ports: []
 net_interfaces_bridge_ports: []
+net_interfaces_loopback_ips: []

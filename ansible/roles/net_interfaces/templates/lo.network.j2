@@ -1,0 +1,11 @@
+# MANAGED BY ANSIBLE
+
+[Match]
+Name=lo
+
+{% for ip_address in net_interfaces_loopback_ips %}
+[Network]
+Scope=host
+Address={{ ip_address }}
+
+{% endfor %}

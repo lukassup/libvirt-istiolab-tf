@@ -1,26 +1,28 @@
 # {{ ansible_managed }}
 log syslog informational
 
+ip prefix-list PERMIT_ANY seq 5 permit any
+
+ip prefix-list DENY_ANY seq 5 deny any
+
 route-map REDISTRIBUTE permit 10
-  match interface vrf-main
+  match interface lo
 
 route-map UCMP_ENABLE permit 10
   set extcommunity bandwidth num-multipaths
 
-router bgp {{ net_frr_bgp_asn }} vrf vrf-main
+router bgp {{ net_frr_bgp_asn }}
   bgp router-id {{ net_frr_bgp_router_id }}
   bgp bestpath as-path multipath-relax
   !bgp bestpath bandwidth ignore
   !bgp bestpath bandwidth skip-missing
   bgp bestpath bandwidth default-weight-for-missing
   neighbor LEAF peer-group
-  neighbor LEAF bfd
-  neighbor LEAF remote-as external
-  {% for interface in net_frr_peer_interfaces %}
-  neighbor {{ interface }} interface peer-group LEAF
-  {% endfor %}
+  neighbor LEAF remote-as internal
+  neighbor {{ net_frr_bgp_peer_ip }} peer-group LEAF
   address-family ipv4 unicast
     neighbor LEAF activate
-    neighbor LEAF route-map UCMP_ENABLE out
+    neighbor LEAF prefix-list PERMIT_ANY out
+    neighbor LEAF prefix-list DENY_ANY in
     redistribute connected route-map REDISTRIBUTE
   exit-address-family

@@ -46,6 +46,7 @@
     - net_spine
   tags:
     - net
+    - net-spine
 
 - name: Network leaf
   hosts: leaf
@@ -54,6 +55,7 @@
     - net_leaf
   tags:
     - net
+    - net-leaf
 
 - name: Kubernetes control plane
   hosts: kube_ctrl
@@ -63,6 +65,7 @@
     - kube_istio
   tags:
     - kube
+    - kube-ctrl
 
 - name: Kubernetes nodes
   hosts: kube_node
@@ -71,11 +74,13 @@
     - kube_node
   tags:
     - kube
+    - kube-node
 
 - name: Istio ingress
   hosts: istio_ingress
   gather_facts: false
   roles:
     - istio_ingress
+    - net_frr
   tags:
     - istio

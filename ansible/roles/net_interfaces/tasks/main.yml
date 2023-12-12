@@ -9,8 +9,12 @@
 
 - name: Remove netplan generated configs
   become: true
-  ansible.builtin.shell:
-    cmd: rm -rf /run/systemd/network/*
+  ansible.builtin.file:
+    state: absent
+    dest: '{{ item }}'
+  with_items:
+    - /run/systemd/network/10-netplan-eth0.link
+    - /run/systemd/network/10-netplan-eth0.network
 
 - name: Configure vrf-main
   become: true
@@ -81,3 +85,17 @@
     - net_interfaces_ports | length > 0
   notify:
     - Reload systemd-networkd
+
+- name: Configure lo
+  become: true
+  ansible.builtin.template:
+    src: lo.network.j2
+    dest: /etc/systemd/network/10-lo.network
+    mode: '0644'
+    owner: root
+    group: root
+  when:
+    - net_interfaces_loopback_ips | length > 0
+  notify:
+    - Reload systemd-networkd
+  tags: [loopback]

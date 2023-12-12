@@ -1,1 +1,15 @@
 ---
+net_frr_frrconf_template: frr.anycast.conf.j2
+net_frr_bgp_peer_ip: '{{ net_interfaces_eth1_gateway }}'
+
+net_interfaces_loopback_ips:
+  - 10.10.0.1/32
+  - 10.10.0.2/32
+  - 10.10.0.3/32
+  - 10.10.0.4/32
+  - 10.10.0.5/32
+  - 10.10.0.6/32
+  - 10.10.0.7/32
+  - 10.10.0.8/32
+  - 10.10.0.9/32
+  - 10.10.0.10/32
