@@ -1,4 +1,0 @@
-auto eth1
-iface eth1
-  address {{ net_interfaces_eth1_address }}
-  post-up ip route add 10.0.0.0/8 via {{ net_interfaces_eth1_gateway }}

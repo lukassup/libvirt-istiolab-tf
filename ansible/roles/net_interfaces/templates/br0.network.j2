@@ -1,0 +1,10 @@
+# MANAGED BY ANSIBLE
+
+[Match]
+Name=br0
+
+[Network]
+DHCP=no
+LinkLocalAddressing=ipv6
+Address={{ net_interfaces_bridge_cidr }}
+VRF=vrf-main

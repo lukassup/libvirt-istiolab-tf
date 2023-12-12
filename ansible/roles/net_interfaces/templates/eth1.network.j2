@@ -1,0 +1,13 @@
+# MANAGED BY ANSIBLE
+
+[Match]
+Name=eth1
+
+[Network]
+DHCP=no
+LinkLocalAddressing=ipv6
+Address={{ net_interfaces_eth1_address }}
+
+[Route]
+Gateway={{ net_interfaces_eth1_gateway }}
+Destination=10.0.0.0/8

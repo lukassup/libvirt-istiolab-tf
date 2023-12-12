@@ -51,7 +51,7 @@
     group: root
     content: |
       [Resolve]
-      DNS=10.1.1.10
+      DNS=10.1.1.10 1.1.1.1
       Domains=istio-system.svc.cluster1.local svc.cluster1.local ~cluster1.local
       MulticastDNS=false
       LLMNR=false

@@ -1,56 +1,4 @@
 ---
-- name: Install ifupdown2
-  become: true
-  ansible.builtin.apt:
-    name: ifupdown2
-    state: present
-
-- name: Interfaces config dir
-  become: true
-  ansible.builtin.file:
-    dest: /etc/network/interfaces.d
-    state: directory
-    mode: "0755"
-    owner: root
-    group: root
-
-- name: Interfaces config default
-  become: true
-  ansible.builtin.template:
-    src: interfaces.j2
-    dest: /etc/network/interfaces
-    mode: "0644"
-    owner: root
-    group: root
-  notify:
-    - Restart networking
-
-- name: Interfaces config switchports
-  become: true
-  ansible.builtin.template:
-    src: "{{ net_interfaces_template }}"
-    dest: /etc/network/interfaces.d/switchports.intf
-    mode: "0644"
-    owner: root
-    group: root
-  when:
-    - net_interfaces_ports | length > 0
-  notify:
-    - Restart networking
-
-- name: Interfaces config eth1
-  become: true
-  ansible.builtin.template:
-    src: interfaces.eth1.j2
-    dest: /etc/network/interfaces.d/eth1.intf
-    mode: "0644"
-    owner: root
-    group: root
-  when:
-    - net_interfaces_eth1_address is defined
-  notify:
-    - Restart networking
-
 - name: Uninstall netplan
   become: true
   ansible.builtin.apt:
@@ -58,3 +6,78 @@
     state: absent
   notify:
     - Reload systemd
+
+- name: Remove netplan generated configs
+  become: true
+  ansible.builtin.shell:
+    cmd: rm -rf /run/systemd/network/*
+
+- name: Configure vrf-main
+  become: true
+  ansible.builtin.template:
+    src: '{{ item }}.j2'
+    dest: '/etc/systemd/network/10-{{ item }}'
+    mode: "0644"
+    owner: root
+    group: root
+  with_items:
+    - vrf-main.netdev
+    - vrf-main.network
+  notify:
+    - Reload systemd-networkd
+
+- name: Configure eth0
+  become: true
+  ansible.builtin.template:
+    src: eth0.network.j2
+    dest: /etc/systemd/network/10-eth0.network
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Reload systemd-networkd
+
+- name: Configure eth1
+  become: true
+  ansible.builtin.template:
+    src: eth1.network.j2
+    dest: /etc/systemd/network/10-eth1.network
+    mode: "0644"
+    owner: root
+    group: root
+  when:
+    - net_interfaces_eth1_address is defined
+  notify:
+    - Reload systemd-networkd
+
+- name: Configure br0
+  become: true
+  ansible.builtin.template:
+    src: '{{ item }}.j2'
+    dest: '/etc/systemd/network/10-{{ item }}'
+    mode: '0644'
+    owner: root
+    group: root
+  with_items:
+    - br0.netdev
+    - br0.network
+  when:
+    - net_interfaces_bridge_ports | length > 0
+  notify:
+    - Reload systemd-networkd
+
+- name: Configure swp
+  become: true
+  ansible.builtin.template:
+    src: swp.network.j2
+    dest: /etc/systemd/network/10-{{ item }}.network
+    mode: "0644"
+    owner: root
+    group: root
+  with_items: '{{ net_interfaces_ports }}'
+  vars:
+    interface: '{{ item }}'
+  when:
+    - net_interfaces_ports | length > 0
+  notify:
+    - Reload systemd-networkd

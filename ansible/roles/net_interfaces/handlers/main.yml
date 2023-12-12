@@ -4,8 +4,8 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: Restart networking
+- name: Reload systemd-networkd
   become: true
   ansible.builtin.systemd:
-    name: networking.service
-    state: restarted
+    name: systemd-networkd.service
+    state: reloaded

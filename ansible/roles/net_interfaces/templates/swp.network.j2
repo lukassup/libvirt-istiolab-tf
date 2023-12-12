@@ -1,0 +1,13 @@
+# MANAGED BY ANSIBLE
+
+[Match]
+Name={{ interface }}
+
+[Network]
+{% if interface in net_interfaces_bridge_ports %}
+Bridge=br0
+{% else %}
+VRF=vrf-main
+{% endif %}
+DHCP=no
+LinkLocalAddressing=ipv6
