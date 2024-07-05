@@ -1,13 +1,13 @@
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.6"
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7.1"
+      version = "~> 0.7.6"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.4.0"
+      version = "~> 2.5.0"
     }
   }
 }
@@ -166,7 +166,7 @@ locals {
 }
 
 output "ip_addrs" {
-  value = [for d in libvirt_domain.domain: d.network_interface[0].addresses[0]]
+  value = [for d in libvirt_domain.domain : d.network_interface[0].addresses[0]]
 }
 
 output "ssh_cmd" {
