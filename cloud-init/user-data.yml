@@ -16,7 +16,6 @@ runcmd:
   - systemctl restart systemd-networkd.service
 
 write_files:
-  - path: /etc/locale
   - path: /etc/udev/rules.d/70-persistent-net.rules
     content: |
       ACTION=="add", SUBSYSTEM=="net", ATTR{address}=="${mgmt_mac}", NAME="eth0", SUBSYSTEMS=="pci"
