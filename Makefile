@@ -7,6 +7,7 @@
 # alias kitchen=make
 .PHONY: create converge verify destroy clean clean-keys clean-all venv ping show lint
 
+terraform := tofu
 topology_id := 1
 topology_file := topology.dot
 venv := ansible/.venv
@@ -28,7 +29,7 @@ clean: clean-keys
 	rm -f $(terraform_state)
 
 clean-keys:
-	terraform output -json -state=$(terraform_state) ip_addrs | jq -r '.[]' | xargs -n1 ssh-keygen -R
+	$(terraform) output -json -state=$(terraform_state) ip_addrs | jq -r '.[]' | xargs -n1 ssh-keygen -R
 
 clean-all: clean destroy
 	rm -rf $(venv)
@@ -41,18 +42,18 @@ create: $(terraform_applied)
 .DELETE_ON_ERROR:
 $(terraform_applied): $(topology_json)
 	rm -f $(terraform_destroyed)
-	env TF_IN_AUTOMATION=1 terraform apply -state=$(terraform_state) -input=false -auto-approve -var=topology_id=$(topology_id) -var=topology_file=$(topology_json)
+	env TF_IN_AUTOMATION=1 $(terraform) apply -state=$(terraform_state) -input=false -auto-approve -var=topology_id=$(topology_id) -var=topology_file=$(topology_json)
 	date +%s > $@
 
 destroy: $(terraform_destroyed)
 .DELETE_ON_ERROR:
 $(terraform_destroyed): $(topology_json)
 	rm -f $(terraform_applied)
-	env TF_IN_AUTOMATION=1 terraform destroy -state=$(terraform_state) -input=false -auto-approve
+	env TF_IN_AUTOMATION=1 $(terraform) destroy -state=$(terraform_state) -input=false -auto-approve
 	date +%s > $@
 
 show:
-	env TF_IN_AUTOMATION=1 terraform output -state=$(terraform_state) ssh_cmd
+	env TF_IN_AUTOMATION=1 $(terraform) output -state=$(terraform_state) ssh_cmd
 
 $(venv):
 	python3 -m venv $(venv)
