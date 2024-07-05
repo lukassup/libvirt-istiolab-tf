@@ -24,7 +24,7 @@ variable "topology_id" {
 
 variable "libvirt_local" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "libvirt_host" {
