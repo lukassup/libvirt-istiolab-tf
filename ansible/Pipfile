@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ansible-core = "~=2.15.5"
+ansible-core = "~=2.15.9"
 
 [dev-packages]
 ansible-lint = "~=6.20.3"
